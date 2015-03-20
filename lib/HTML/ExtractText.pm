@@ -137,51 +137,49 @@ HTML::ExtractText - extract multiple text strings from HTML content, using CSS s
 
 =head1 SYNOPSIS
 
+At its simplest; use CSS selectors:
+
 =for pod_spiffy start code section
 
     use HTML::ExtractText;
+    my $ext = HTML::ExtractText->new;
+    $ext->extract({ page_title => 'title' }, $html) or die "Error: $ext";
+    print "Page title is $ext->{page_title}\n";
 
-    my $html_code = <<'END';
-        <title>Example Domain</title>
-        <p><a href="http://www.iana.org/domains/example">
-            More information...</a></p>
-    END
+=for pod_spiffy end code section
 
-    ## The first argument tells the object what we want to extract
-    ## The keys what we'll use as keys to retrieve data
-    ## And values are CSS selectors specifying elements we want
+We can go fancy pants with selectors as well as
+extract more than one bit of text:
 
-    my $extractor = HTML::ExtractText->new;
-    $extractor->extract(
+=for pod_spiffy start code section
+
+    use HTML::ExtractText;
+    my $ext = HTML::ExtractText->new;
+    $ext->extract(
         {
-            title => 'title',
-            external_links => 'a:not([href~="example.com"])[href^="http"]',
+            article   => 'article#main_content',
+            irc_links => 'article#main_content a[href^="irc://"]',
         },
-        $html_code,
-    ) or die "Extraction error: $extractor";
+        $html,
+    ) or die "Error: $ext";
 
-    print "Title is: $extractor->{title}\n\n",
-        "External links: $extractor->{external_links}\n";
+    print "IRC links:\n$ext->{irc_links}\n";
+    print "Full text:\n$ext->{article}\n";
 
+=for pod_spiffy end code section
 
-    ## We can also pass an object and HTML::ExtractText will call
-    ## methods on it that are the keys of the input hashref.
-    ## We can use that to populate the object with data from HTML
-    ## (by having HTML::ExtractText call on accessor methods)
+We can also pass in an object and let the extractor call
+setter methods on it when it extracts text:
 
-    package Foo;
-    sub stuff { my $self = shift; print "@_\n"; }
+=for pod_spiffy start code section
 
-    package main;
+    use HTML::ExtractText;
+    my $ext = HTML::ExtractText->new;
+    $ext->extract({ title => 'title' }, $html_code, $some_object )
+        or die "Error: $ext";
 
-    $extractor = HTML::ExtractText->new;
-    $extractor->extract(
-        { stuff => 'title', },
-        '<title>My html code!</title>',
-        bless {}, 'Foo',
-    ) or die "Extraction error: $extractor";
-
-    print "Title is: $extractor->{stuff}\n\n";
+    print "Our object's ->title method is now set to:",
+        $some_object->title, "\n";
 
 =for pod_spiffy end code section
 
