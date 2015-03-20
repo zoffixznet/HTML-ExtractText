@@ -129,7 +129,7 @@ __END__
 
 =encoding utf8
 
-=for stopwords Znet Zoffix
+=for stopwords Znet Zoffix errored
 
 =head1 NAME
 
@@ -174,9 +174,7 @@ HTML::ExtractText - extra multiple text strings from HTML content, using CSS sel
 
     package main;
 
-    use HTML::ExtractText;
-
-    my $extractor = HTML::ExtractText->new;
+    $extractor = HTML::ExtractText->new;
     $extractor->extract(
         { stuff => 'title', },
         '<title>My html code!</title>',
@@ -211,7 +209,7 @@ which is overloaded for hash dereferencing
 (C<< use overload q|%{}| ... >>).
 
 What this means is that you can interpolate the object in a string
-to retrive the error message and you can use the object as a hashref
+to retrieve the error message and you can use the object as a hashref
 to access the hashref returned by C<< ->last_result() >>.
 
 =head1 METHODS
@@ -283,7 +281,7 @@ given HTML code and returns a hashref with results (
     see C<< ->last_results() >> method
 ). On error, returns
 C<undef> or empty list and the error will be available via
-C<< ->error() >> method. Even if errors occured, anything that
+C<< ->error() >> method. Even if errors occurred, anything that
 was successfully extracted will still be available through
 C<< ->last_results() >> method.
 
@@ -348,7 +346,7 @@ the extracted text will be given to those methods as the first argument.
         '<title>My html code!</title>',
     ) or die "Extraction error: $extractor";
 
-Takes no arguments. Returns the error message as a string, if any occured
+Takes no arguments. Returns the error message as a string, if any occurred
 during the last call to C<< ->extract() >>. Note that
 C<< ->error() >> will only return one of the error messages, even
 if more than one selector failed. Examine the hashref returned
