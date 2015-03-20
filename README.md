@@ -1,255 +1,348 @@
 # NAME
 
-WWW::Lipsum - perl interface to www.lipsum.com
+HTML::ExtractText - extra multiple text strings from HTML content, using CSS selectors
 
 # SYNOPSIS
 
-    use WWW::Lipsum;
+<div>
+    <div style="display: table; height: 91px; background: url(http://zoffix.com/CPAN/Dist-Zilla-Plugin-Pod-Spiffy/icons/section-code.png) no-repeat left; padding-left: 120px;" ><div style="display: table-cell; vertical-align: middle;">
+</div>
 
-    my $lipsum = WWW::Lipsum->new(
-        html => 1, amount => 50, what => 'bytes', start => 0
-    );
+    use HTML::ExtractText;
 
-    print "$lipsum\n"; # auto-fetches lipsum text
+    my $html_code = <<'END';
+        <title>Example Domain</title>
+        <p><a href="http://www.iana.org/domains/example">
+            More information...</a></p>
+    END
+
+    ## The first argument tells the object what we want to extract
+    ## The keys what we'll use as keys to retrieve data
+    ## And values are CSS selectors specifying elements we want
+
+    my $extractor = HTML::ExtractText->new;
+    $extractor->extract(
+        {
+            title => 'title',
+            external_links => 'a:not([href~="example.com"])[href^="http"]',
+        },
+        $html_code,
+    ) or die "Extraction error: $extractor";
+
+    print "Title is: $extractor->{title}\n\n",
+        "External links: $extractor->{external_links}\n";
 
 
-    # Change an arg and check for errors explicitly
-    $lipsum->generate( html => 0 )
-        or die "Error: " . $lipsum->error;
+    ## We can also pass an object and HTML::ExtractText will call
+    ## methods on it that are the keys of the input hashref.
+    ## We can use that to populate the object with data from HTML
+    ## (by having HTML::ExtractText call on accessor methods)
 
-    print $lipsum->lipsum . "\n";
+    package Foo;
+    sub stuff { my $self = shift; print "@_\n"; }
 
+    package main;
 
-    # Change some args and fetch using interpolation overload
-    $lipsum->start(0);
-    $lipsum->amount(5);
-    $lipsum->what('paras');
+    $extractor = HTML::ExtractText->new;
+    $extractor->extract(
+        { stuff => 'title', },
+        '<title>My html code!</title>',
+        bless {}, 'Foo',
+    ) or die "Extraction error: $extractor";
 
-    print "$lipsum\n";
+    print "Title is: $extractor->{stuff}\n\n";
 
-    # generate a whole bunch of lipsums
-    my @lipsums = map "$lipsum", 1..10;
+<div>
+    </div></div>
+</div>
 
 # DESCRIPTION
 
-Generate _Lorem Ipsum_ place holder text from perl, using
-[www.lipsum.com](http://www.lipsum.com/)
+The module allows to extract \[multiple\] text strings from HTML documents,
+using CSS selector to declare what text needs extracting. The module
+can either return the results as a hashref or automatically call
+setter methods on a provided object.
 
-# SEE ALSO
+# OVERLOADED METHODS
 
-You most likely want [Text::Lorem](https://metacpan.org/pod/Text::Lorem) or [Text::Lorem::More](https://metacpan.org/pod/Text::Lorem::More)
-instead of this module, as those generate _Lorem Ipsum_ text without
-using a web service.
+    $extractor->extract(
+        { stuff => 'title', },
+        '<title>My html code!</title>',
+        bless {}, 'Foo',
+    ) or die "Extraction error: $extractor";
+
+    print "Title is: $extractor->{stuff}\n\n";
+
+The module incorporates two overloaded methods `->error()`, which
+is overloaded for interpolation (`use overload q|""| ...`),
+and `->last_result()`,
+which is overloaded for hash dereferencing
+(`use overload q|%{}| ...`).
+
+What this means is that you can interpolate the object in a string
+to retrieve the error message and you can use the object as a hashref
+to access the hashref returned by `->last_result()`.
 
 # METHODS
 
-## `new`
+## `->new()`
 
-    my $lipsum = WWW::Lipsum->new;
+<div>
+    <img alt="" src="http://zoffix.com/CPAN/Dist-Zilla-Plugin-Pod-Spiffy/icons/in-key-value.png"> <img alt="" src="http://zoffix.com/CPAN/Dist-Zilla-Plugin-Pod-Spiffy/icons/out-object.png">
+</div>
 
-    my $lipsum = WWW::Lipsum->new(
-        html => 1, amount => 50, what => 'bytes', start => 0
+    my $extractor = HTML::ExtractText->new;
+
+    my $extractor = HTML::ExtractText->new(
+        separator        => "\n",
+        ignore_not_found => 1,
+    ); # default values for arguments are shown
+
+Creates and returns new `HTML::ExtractText` object. Takes optional
+arguments as key/value pairs:
+
+### `separator`
+
+    my $extractor = HTML::ExtractText->new(
+        separator => "\n", # default value
     );
 
-Creates and returns a brand new `WWW::Lipsum` object. Takes
-a number of __optional__ arguments that are given as key/value
-pairs. These specify the format of the generated lipsum
-text and can be changed either individually, using the
-appropriate accessor methods, or when calling `->generate` method.
-Possible arguments are as follows:
+    my $extractor = HTML::ExtractText->new(
+        separator => undef,
+    );
 
-### `what`
+**Optional**. **Default:** `\n` (new line).
+Takes `undef` or a string as a value.
+Specifies what to do when CSS selector matches multiple
+elements. If set to a string value, text from all the matching
+elements will be joined using that string. If set to `undef`,
+no joining will happen and results will be returned as arrayrefs
+instead of strings (even if selector matches a single element).
 
-    my $lipsum = WWW::Lipsum->new( what => 'paras' );
-    my $lipsum = WWW::Lipsum->new( what => 'lists' );
-    my $lipsum = WWW::Lipsum->new( what => 'words' );
-    my $lipsum = WWW::Lipsum->new( what => 'bytes' );
+### `ignore_not_found`
 
-__Optional.__ Specifies in what form to get the
-_Lorem Ipsum_ text. Valid values are lowercase strings
-`paras`, `lists`, `words`, and `bytes` that mean to get the text
-as `paragraps`, `lists`, `words`, or `bytes` respectively.
-__Defaults to:__ `paras`.
+    my $extractor = HTML::ExtractText->new(
+        ignore_not_found => 1,  # default value
+    );
 
-The meaning is most relevant for the `amount` argument (see below). The
-`lists` value will cause generation of variable-item-number lists of
-_Lorem Ipsum_ text. __Note:__ there seems to be very loose adherence
-to the `amount` you specified and what you get when you
-request `bytes`, and the value seems to be ignored
-if `amount` is set too low.
+    my $extractor = HTML::ExtractText->new(
+        ignore_not_found => 0,
+    );
 
-### `amount`
+**Optional**. **Default:** `1` (true). Takes true or false values
+as a value. Specifies whether to consider it an error when any
+of the given selectors match nothing. If set to a true value,
+any non-matching selectors will have empty strings as values and no
+errors will be reported. If set to a false value, all selectors must
+match at least one element or the module will error out.
 
-    my $lipsum = WWW::Lipsum->new( amount => 10 );
+## `->extract()`
 
-__Optional.__ __Takes__ a positive integer as a value. Large values
-will likely be abridged by [www.lipsum.com](http://www.lipsum.com/) to something reasonable.
-Specifies the number of `what` (see above) things to get.
-__Defaults to:__ `5`.
+<div>
+    <img alt="" src="http://zoffix.com/CPAN/Dist-Zilla-Plugin-Pod-Spiffy/icons/out-scalar.png">
+</div>
 
-### `html`
+    my $results = $extractor->extract(
+        { stuff => 'title', },
+        '<title>My html code!</title>',
+        $some_object, # optional
+    ) or die "Extraction error: $extractor";
 
-    my $lipsum = WWW::Lipsum->new( html => 1 );
+    print "Title is: $extractor->{stuff}\n\n";
+    # $extractor->{stuff} is the same as $results->{stuff}
 
-__Optional.__ __Takes__ true or false values. __Specifies__ whether to wrap
-_Lorem Ipsum_ text in HTML markup (will wrap in HTML when set to
-a true value). This will be `<ul>/<li>`
-elements when `what` is set to `lists` and `<p>` elements
-for everything else. When set to false, paragraphs and lists will
-be separated by double new lines. __Defaults to:__ `0` (false).
+Takes **two mandatory** and **one optional** arguments. Extracts text from
+given HTML code and returns a hashref with results (
+    see `->last_results()` method
+). On error, returns
+`undef` or empty list and the error will be available via
+`->error()` method. Even if errors occurred, anything that
+was successfully extracted will still be available through
+`->last_results()` method.
 
-### `start`
+### first argument
 
-    my $lipsum = WWW::Lipsum->new( start => 0 );
+    $extractor->extract(
+        { stuff => 'title', },
+        ... ,
+        ... ,
+    ) or die "Extraction error: $extractor";
 
-__Optional.__ __Takes__ true or false values as a value. When set
-to a true value, will ask [www.lipsum.com](http://www.lipsum.com/)
-to start the generated
-text with _"Lorem Ipsum"_. __Defaults to:__ `1` (true)
+Must be a hashref. The keys can be whatever you want; you will use them
+to refer to the extracted text. The values must be CSS selectors that
+match the elements you want to extract text from.
+All the selectors listed on
+[https://metacpan.org/pod/Mojo::DOM::CSS#SELECTORS](https://metacpan.org/pod/Mojo::DOM::CSS#SELECTORS) are supported.
 
-__Note:__ it seems sometimes [www.lipsum.com](http://www.lipsum.com/)
-would return text that starts with _"Lorem Ipsum"_ simply by chance.
+Note: the values will be modified in place in the original
+hashref you provided, so you can use that
+to your advantage, if needed.
 
-## `generate`
+### second argument
 
-    my $text = $lipsum->generate(
-        html => 1, amount => 50, what => 'bytes', start => 0
-    ) or die $lipsum->error;
-    my $x = $text;
+    $extractor->extract(
+        ... ,
+        '<title>My html code!</title>',
+        ... ,
+    ) or die "Extraction error: $extractor";
+
+Takes a string that is HTML code you're trying to extract text from.
+
+### third argument
+
+    $extractor->extract(
+        { stuff => 'title', },
+        '<title>My html code!</title>',
+        $some_object,
+    ) or die "Extraction error: $extractor";
+
+    # this is what is being done automatically, during extraction,
+    # for each key in the first argument of ->extract():
+    # $some_object->stuff( $extractor->{stuff} );
+
+**Optional**. No defaults. For convenience, you can supply an object and
+`HTML::ExtractText` will call methods on it. The called methods
+will be the keys of the first argument given to `->extract()` and
+the extracted text will be given to those methods as the first argument.
+
+<div>
+    <div style="background: url(http://zoffix.com/CPAN/Dist-Zilla-Plugin-Pod-Spiffy/icons/hr.png);height: 18px;"></div>
+</div>
+
+## `->error()`
+
+<div>
+    <img alt="" src="http://zoffix.com/CPAN/Dist-Zilla-Plugin-Pod-Spiffy/icons/in-scalar-optional.png"> <img alt="" src="http://zoffix.com/CPAN/Dist-Zilla-Plugin-Pod-Spiffy/icons/out-scalar.png">
+</div>
+
+    $extractor->extract(
+        { stuff => 'title', },
+        '<title>My html code!</title>',
+    ) or die "Extraction error: " . $extractor->error;
+
+    $extractor->extract(
+        { stuff => 'title', },
+        '<title>My html code!</title>',
+    ) or die "Extraction error: $extractor";
+
+Takes no arguments. Returns the error message as a string, if any occurred
+during the last call to `->extract()`. Note that
+`->error()` will only return one of the error messages, even
+if more than one selector failed. Examine the hashref returned
+by `->last_results()` to find all the errors;
+for any selector that errored out, the value will begin with
+`"ERROR: "` and the error message will be there.
+
+## `->last_results()`
+
+<div>
+    <img alt="" src="http://zoffix.com/CPAN/Dist-Zilla-Plugin-Pod-Spiffy/icons/in-scalar-optional.png"> <img alt="" src="http://zoffix.com/CPAN/Dist-Zilla-Plugin-Pod-Spiffy/icons/out-scalar.png">
+</div>
+
+    $extractor->extract(
+        { stuff => 'title', },
+        '<title>My html code!</title>',
+    ) or die "Extraction error: $extractor";
+
+    print "Stuff is " . $extractor->last_results->{stuff} . "\n";
 
     # or
-    $lipsum->generate or die $lipsum->error;
-    $text = $lipsum->lipsum;
 
-    # or
-    my $text = "$lipsum";
+    print "Stuff is $extractor->{stuff}\n";
 
-Accesses [www.lipsum.com](http://www.lipsum.com/) to obtain requested
-chunk of _Lorem Ipsum_ text.
-__Takes__ the same arguments as `new` (see above); all __optional__.
-__On success__ returns generated _Lorem Ipsum_ text. __On failure__
-returns `undef` or an empty list, depending on the context, and
-the reason for failure will be available via the `->error` method.
+Takes no arguments. Returns the same hashref
+the last call to `->extract` did. If `->extract`
+failed, you can still use `->last_results()` to get
+anything that didn't error out (the error messages will be in the values
+of failed keys).
 
-__Note:__ if you call `->generate` with arguments, the new
-values will persist for all subsequent calls to `->generate`,
-until you change them either by, again, passing arguments to
-`->generate`, or by using accessor methods.
+The hashref will contain the same keys as the first argument
+to `->extract()` had and the values will be replaced with
+whatever the selectors matched.
 
-You can call `->generate` by simply interpolating the `WWW::Lipsum`
-object in a string. When called this way, if an error occurs, the
-interpolated value will be `[Error: ERROR_DESCRIPTION_HERE]`, where
-`ERROR_DESCRIPTION_HERE` is the return value of `->error` method.
-On success, the interpolated value will be the generated _Lorem Ipsum_
-text.
+If `separator` (see `->new()`) is set to `undef`, the values
+will be arrayrefs, with each item in those arrayrefs corresponding
+to one matched element in HTML.
 
-## `lipsum`
+## `->separator()`
 
-    $lipsum->generate or die $lipsum->error;
-    $text = $lipsum->lipsum;
+<div>
+    <img alt="" src="http://zoffix.com/CPAN/Dist-Zilla-Plugin-Pod-Spiffy/icons/in-scalar-optional.png"> <img alt="" src="http://zoffix.com/CPAN/Dist-Zilla-Plugin-Pod-Spiffy/icons/out-scalar.png">
+</div>
 
-__Takes__ no arguments. Must be called after a successful call to
-`->generate`. Returns the same thing the last successful call
-to `->generate` returned.
+    $extractor->separator("\n");
+    $extractor->separator(undef);
 
-## `error`
+Accessor to `separator` option (see `->new()`).
+Takes one optional argument, which if provided, will become the
+new separator.
 
-    $lipsum->generate
-        or die 'Error occured: ' . $lipsum->error;
+## `->ignore_not_found()`
 
-__Takes__ no arguments. Returns the human-readable message, explaining
-why the last call to `->generate` failed.
+<div>
+    <img alt="" src="http://zoffix.com/CPAN/Dist-Zilla-Plugin-Pod-Spiffy/icons/in-scalar-optional.png"> <img alt="" src="http://zoffix.com/CPAN/Dist-Zilla-Plugin-Pod-Spiffy/icons/out-scalar.png">
+</div>
 
-## `what`
+    $extractor->ignore_not_found(1);
+    $extractor->ignore_not_found(0);
 
-    my $current_what = $lipsum->what;
-    $lipsum->what('paras');
-    $lipsum->what('lists');
-    $lipsum->what('words');
-    $lipsum->what('bytes');
+Accessor to `ignore_not_found` option (see `->new()`).
+Takes one optional argument, which if provided, will become the
+new value of `ignore_not_found` option.
 
-__Takes__ a single __optional__ argument that is the same as the value for the
-`what` argument of the `->new` method.
-When given an argument, modifies the currently active value for the
-`what` argument.
-__Returns__ the currently active value of `what` argument (which
-will be the provided argument, if one is given).
-See `->new` method for more info.
+# SEE ALSO
 
-## `start`
+[Mojo::DOM](https://metacpan.org/pod/Mojo::DOM), [Text::Balanced](https://metacpan.org/pod/Text::Balanced), [HTML::Extract](https://metacpan.org/pod/HTML::Extract)
 
-    my $current_start = $lipsum->start;
-    $lipsum->start(0);
-    $lipsum->start(1);
-
-__Takes__ a single __optional__ argument that is the same as the value for the
-`start` argument of the `->new` method.
-When given an argument, modifies the currently active value for the
-`start` argument. __Returns__ the currently active value of `start`
-argument (which will be the provided argument, if one is given).
-See `->new` method for more info.
-
-## `amount`
-
-    my $current_amount = $lipsum->amount;
-    $lipsum->amount(50);
-    $lipsum->amount(15);
-
-__Takes__ a single __optional__ argument that is the same as the value for the
-`amount` argument of the `->new` method.
-When given an argument, modifies the currently active value for the
-`amount` argument.
-See `->new` method for more info.
-
-## `html`
-
-    my $current_html = $lipsum->html;
-    $lipsum->html(1);
-    $lipsum->html(0);
-
-__Takes__ a single __optional__ argument that is the same as the value for the
-`html` argument of the `->new` method.
-When given an argument, modifies the currently active value for the
-`html` argument. __Returns__ the currently active value of `html`
-argument (which will be the provided argument, if one is given).
-See `->new` method for more info.
+<div>
+    <div style="background: url(http://zoffix.com/CPAN/Dist-Zilla-Plugin-Pod-Spiffy/icons/hr.png);height: 18px;"></div>
+</div>
 
 # REPOSITORY
 
+<div>
+    <div style="display: table; height: 91px; background: url(http://zoffix.com/CPAN/Dist-Zilla-Plugin-Pod-Spiffy/icons/section-github.png) no-repeat left; padding-left: 120px;" ><div style="display: table-cell; vertical-align: middle;">
+</div>
+
 Fork this module on GitHub:
-[https://github.com/zoffixznet/WWW-Lipsum](https://github.com/zoffixznet/WWW-Lipsum)
+[https://github.com/zoffixznet/HTML-ExtractText](https://github.com/zoffixznet/HTML-ExtractText)
+
+<div>
+    </div></div>
+</div>
 
 # BUGS
 
+<div>
+    <div style="display: table; height: 91px; background: url(http://zoffix.com/CPAN/Dist-Zilla-Plugin-Pod-Spiffy/icons/section-bugs.png) no-repeat left; padding-left: 120px;" ><div style="display: table-cell; vertical-align: middle;">
+</div>
+
 To report bugs or request features, please use
-[https://github.com/zoffixznet/WWW-Lipsum/issues](https://github.com/zoffixznet/WWW-Lipsum/issues)
+[https://github.com/zoffixznet/HTML-ExtractText/issues](https://github.com/zoffixznet/HTML-ExtractText/issues)
 
 If you can't access GitHub, you can email your request
-to `bug-www-lipsum at rt.cpan.org`
+to `bug-html-extracttext at rt.cpan.org`
+
+<div>
+    </div></div>
+</div>
 
 # AUTHOR
 
-Zoffix Znet <zoffix at cpan.org>
-([http://zoffix.com/](http://zoffix.com/), [http://haslayout.net/](http://haslayout.net/))
+<div>
+    <div style="display: table; height: 91px; background: url(http://zoffix.com/CPAN/Dist-Zilla-Plugin-Pod-Spiffy/icons/section-author.png) no-repeat left; padding-left: 120px;" ><div style="display: table-cell; vertical-align: middle;">
+</div>
+
+<div>
+    <span style="display: inline-block; text-align: center;"> <a href="http://metacpan.org/author/ZOFFIX"> <img src="http://www.gravatar.com/avatar/328e658ab6b08dfb5c106266a4a5d065?d=http%3A%2F%2Fwww.gravatar.com%2Favatar%2F627d83ef9879f31bdabf448e666a32d5" alt="ZOFFIX" style="display: block; margin: 0 3px 5px 0!important; border: 1px solid #666; border-radius: 3px; "> <span style="color: #333; font-weight: bold;">ZOFFIX</span> </a> </span>
+</div>
+
+<div>
+    </div></div>
+</div>
 
 # LICENSE
 
 You can use and distribute this module under the same terms as Perl itself.
 See the `LICENSE` file included in this distribution for complete
 details.
-
-# HISTORY AND NOTES ON OLD VERSION
-
-There used to be another version of `WWW::Lipsum` on CPAN, developed
-by Earle Martin. I have a couple of modules that depend on
-`WWW::Lipsum`. Earle, or someone else, subsequently deleted it from
-CPAN, leaving my modules dead.
-
-At first, I resurrected Earle's version, but it had a bug. The code
-was using [HTML::TokeParser](https://metacpan.org/pod/HTML::TokeParser) and was a pain in the butt
-to maintain, and the interface really irked me.
-So, I rewrote the whole thing from scratch, broke the API
-(more or less), and released the module under a same-as-perl license.
-
-If you are looking for Earle's version, it can still be accessed on
-[BackPAN](http://backpan.perl.org/authors/id/E/EM/EMARTIN/).
