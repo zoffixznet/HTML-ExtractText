@@ -133,7 +133,7 @@ __END__
 
 =head1 NAME
 
-HTML::ExtractText - extra multiple text strings from HTML content, using CSS selectors
+HTML::ExtractText - extract multiple text strings from HTML content, using CSS selectors
 
 =head1 SYNOPSIS
 
