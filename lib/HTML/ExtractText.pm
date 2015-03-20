@@ -188,7 +188,7 @@ HTML::ExtractText - extra multiple text strings from HTML content, using CSS sel
 =head1 DESCRIPTION
 
 The module allows to extract [multiple] text strings from HTML documents,
-using CSS selector to declare what text needs extracting. The module
+using CSS selectors to declare what text needs extracting. The module
 can either return the results as a hashref or automatically call
 setter methods on a provided object.
 
