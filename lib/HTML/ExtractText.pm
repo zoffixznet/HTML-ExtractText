@@ -6,6 +6,7 @@ use warnings;
 # VERSION
 
 use Try::Tiny;
+use Scalar::Util qw/blessed/;
 use Carp qw/croak/;
 use Devel::TakeHashArgs;
 use Mojo::DOM;
@@ -41,6 +42,21 @@ sub extract {
     defined $html
         or return $self->_set_error('Second argument to extract_text() is '
                     . 'an undef, expected HTML');
+
+    if ( defined $obj ) {
+        blessed $obj
+           or return $self->_set_error('Third argument must be an object');
+
+        for ( keys %$what ) {
+            $obj->can($_)
+                or return $self->_set_error(
+                    'The object your provided does not implement the ->'
+                    . $_ . '() method that you requested in the first'
+                    . ' argument',
+                );
+        }
+    }
+
 
     my $dom = Mojo::DOM->new( $html );
 

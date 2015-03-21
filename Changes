@@ -2,6 +2,7 @@ Revision history for HTML-ExtractText
 
 1.001002  2015-03-20
         - Documentation corrections and clarifications
+        - Added extra checks for validity of ->extract()'s arguments
 
 1.001001  2015-03-19
         - First version released on an unsuspecting world

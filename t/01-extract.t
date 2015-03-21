@@ -5,7 +5,7 @@ use warnings FATAL => 'all';
 use Test::More;
 use Test::Deep;
 
-plan tests => 22;
+# plan tests => 22;
 
 use HTML::ExtractText;
 
@@ -152,3 +152,26 @@ use HTML::ExtractText;
 
 
 }
+
+{ # passing invalid object
+    my $ext = HTML::ExtractText->new;
+    ok !defined($ext->extract({ z => 'z', }, '<p>Paras1</p>', [], )),
+        'we error out when invalid object is passed';
+
+    is $ext->error, 'Third argument must be an object',
+        'got good error message';
+}
+
+{ # passing object that doesn't implement a method
+    my $ext = HTML::ExtractText->new;
+    ok !defined($ext->extract({ z => 'z', }, '<p>Paras1</p>',
+            bless [], 'Foo', )),
+        'we error out when object does not implement a method';
+
+    is $ext->error,
+        'The object your provided does not implement the ->'
+            . 'z() method that you requested in the first argument',
+        'got good error message';
+}
+
+done_testing();
