@@ -146,6 +146,7 @@ use HTML::ExtractText;
     };
 
     ok !defined($result), 'return of ->extract';
+    is $ext->error, 'ERROR: [a]: NOT FOUND', '->error returns sane value';
     cmp_deeply +{%$ext}, $expected_result, 'hash interpolation of object';
     cmp_deeply $ext->last_results, $expected_result,
         'return from ->last_results()';

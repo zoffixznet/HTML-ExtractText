@@ -80,7 +80,7 @@ sub extract {
 
         } catch {
             chomp($_);
-            $self->error("ERROR: [$selector]:  $_");
+            $self->error("ERROR: [$selector]: $_");
             $result = "ERROR: $_";
             $did_have_error = 1;
         };
