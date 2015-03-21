@@ -226,7 +226,7 @@ which is overloaded for hash dereferencing
 
 What this means is that you can interpolate the object in a string
 to retrieve the error message and you can use the object as a hashref
-to access the hashref returned by C<< ->last_result() >>.
+to access the hashref returned by C<< ->last_results() >>.
 
 =head1 METHODS
 
