@@ -153,6 +153,8 @@ HTML::ExtractText - extract multiple text strings from HTML content, using CSS s
 
 =head1 SYNOPSIS
 
+=for test_synopsis no strict qw/vars/; no warnings;
+
 At its simplest; use CSS selectors:
 
 =for pod_spiffy start code section
