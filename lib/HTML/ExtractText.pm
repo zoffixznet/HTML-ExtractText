@@ -432,6 +432,19 @@ This module automatically converts non-breaking spaces to regular
 spaces, because C<&nbsp;>s have cooties and no one wants to play
 with them.
 
+=head2 Encoding
+
+This module does not automatically encode extracted text, so the
+examples in this documentation should really include something akin to:
+
+    use Encode;
+
+    my $title = encode 'utf8', $ext->{page_title};
+    print "$title\n";
+
+Or a similar approach to encoding, depending on what encoding you're
+actually using.
+
 =head1 SEE ALSO
 
 L<Mojo::DOM>, L<Text::Balanced>, L<HTML::Extract>
