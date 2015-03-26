@@ -175,4 +175,22 @@ use HTML::ExtractText;
         'got good error message';
 }
 
+{ # check that we don't have non-breaking spaces in output
+    my $ext = HTML::ExtractText->new;
+    my $result = $ext->extract(
+        {
+            p => 'p',
+            a => '[href]',
+        },
+        '<p>Par  as1</p><a href="#">Lin&nbsp;kas</a><p>Par &nbsp; as2</p>',
+    );
+
+    my $expected_result = {
+        p => "Par as1\nPar   as2",
+        a => 'Lin kas',
+    };
+
+    cmp_deeply $result, $expected_result, 'successfully got rid of &nbsp;';
+}
+
 done_testing();

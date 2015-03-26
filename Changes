@@ -1,5 +1,8 @@
 Revision history for HTML-ExtractText
 
+1.001004  2015-03-26
+        - Added automatic stripping of non-breaking spaces from output
+
 1.001003  2015-03-23
         - Added extra tests
 

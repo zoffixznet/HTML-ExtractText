@@ -68,6 +68,9 @@ sub extract {
             my @results
             = $dom->find( $what->{ $selector } )->map('all_text')->each;
 
+            # get rid of pesky non-breaking spaces
+            tr/\x{00A0}/ / for @results;
+
             die "NOT FOUND\n"
                 if not @results and not $self->ignore_not_found;
 
@@ -420,6 +423,14 @@ new separator.
 Accessor to C<ignore_not_found> option (see C<< ->new() >>).
 Takes one optional argument, which if provided, will become the
 new value of C<ignore_not_found> option.
+
+=head1 NOTES AND CAVEATS
+
+=head2 Non-breaking spaces
+
+This module automatically converts non-breaking spaces to regular
+spaces, because C<&nbsp;>s have cooties and no one wants to play
+with them.
 
 =head1 SEE ALSO
 
