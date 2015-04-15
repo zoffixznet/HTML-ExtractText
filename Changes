@@ -1,5 +1,8 @@
 Revision history for HTML-ExtractText
 
+1.002003  2015-04-15
+        - Internal change to make subclassing a bit saner
+
 1.002002  2015-04-15
         - Made the module automatically figure out what text to return
             when selected element is a form element or image

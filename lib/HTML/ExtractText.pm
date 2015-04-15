@@ -65,20 +65,7 @@ sub extract {
         my $result;
 
         try {
-            my @results
-            = $dom->find( $what->{ $selector } )->map(sub{
-                my $tag = $_->tag;
-                return $_->all_text unless $tag =~ /input|img/;
-
-                return $_->attr('alt')//''
-                    if $tag eq 'img' or
-                    ($tag eq 'input' and ($_->attr('type')//'') eq 'image');
-
-                return $_->attr('value')//'';
-            })->each;
-
-            $self->extra_processing( \@results, $dom, $selector, $what );
-
+            my @results = $self->_extract( $dom, $selector, $what, );
             die "NOT FOUND\n"
                 if not @results and not $self->ignore_not_found;
 
@@ -145,8 +132,21 @@ sub _set_error {
     return;
 }
 
-sub extra_processing {
-    # this is for overriding in subclasses
+sub _process {
+    my $tag = $_->tag;
+    return $_->all_text unless $tag =~ /input|img/;
+
+    return $_->attr('alt')//''
+        if $tag eq 'img' or
+        ($tag eq 'input' and ($_->attr('type')//'') eq 'image');
+
+    return $_->attr('value')//'';
+}
+
+sub _extract {
+    my ( $self, $dom, $selector, $what ) = @_;
+    return $dom->find( $what->{ $selector } )
+        ->map( sub { $self->_process( @_ ) } )->each;
 }
 
 
@@ -447,23 +447,16 @@ new value of C<ignore_not_found> option.
 
 =head1 SUBCLASSING
 
-=head2 C<< ->extra_processing() >>
-
-    sub extra_processing {
-        my ( $self, $results, $dom, $selector, $what ) = @_;
-
-        ...
+    sub _extract {
+        my ( $self, $dom, $selector, $what ) = @_;
+        return $dom->find( $what->{ $selector } )
+            ->map( sub { $self->_process( @_ ) } )->each;
     }
 
-This module offers a method you can subclass. It will be called for
-each selector given in the first argument to C<< ->extract() >>.
-Its C<@_> will contain:
-your class object, results arrayref with any found text—it will always
-be an arrayref, regardless of the value of C<separator>—, a
-L<Mojo::DOM> object with html we're processing, the current selector
-we're working on (that's the keys of the first argument
-to C<< ->extract() >>), and the hashref passed as the first
-argument to C<< ->extract() >>.
+You can subclass this module by overriding either or both
+C<_extract> and C<_process> methods. Their names and purpose
+are guaranteed to remain unchanged. See source code for their default
+implementation.
 
 =head1 NOTES AND CAVEATS
 

@@ -307,23 +307,16 @@ new value of `ignore_not_found` option.
 
 # SUBCLASSING
 
-## `->extra_processing()`
-
-    sub extra_processing {
-        my ( $self, $results, $dom, $selector, $what ) = @_;
-
-        ...
+    sub _extract {
+        my ( $self, $dom, $selector, $what ) = @_;
+        return $dom->find( $what->{ $selector } )
+            ->map( sub { $self->_process( @_ ) } )->each;
     }
 
-This module offers a method you can subclass. It will be called for
-each selector given in the first argument to `->extract()`.
-Its `@_` will contain:
-your class object, results arrayref with any found text—it will always
-be an arrayref, regardless of the value of `separator`—, a
-[Mojo::DOM](https://metacpan.org/pod/Mojo::DOM) object with html we're processing, the current selector
-we're working on (that's the keys of the first argument
-to `->extract()`), and the hashref passed as the first
-argument to `->extract()`.
+You can subclass this module by overriding either or both
+`_extract` and `_process` methods. Their names and purpose
+are guaranteed to remain unchanged. See source code for their default
+implementation.
 
 # NOTES AND CAVEATS
 

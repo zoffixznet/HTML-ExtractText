@@ -10,41 +10,63 @@ use parent 'HTML::ExtractText';
 
 our @ReturnData;
 
-sub extra_processing {
+sub _extract {
+    my ( $self, $dom, $selector, $what ) = @_;
+
     @ReturnData = @{[@_]};
-    $ReturnData[4] = {%{$ReturnData[4]}};
+    $ReturnData[3] = {%{$ReturnData[3]}};
 }
 
 package main;
 
-my $ext = Test0::Foo->new;
-can_ok($ext,
-    qw/new  extract  error  last_results  separator
-        ignore_not_found extra_processing/
-);
-isa_ok($ext, 'Test0::Foo');
+{
+    my $ext = Test0::Foo->new;
+    can_ok($ext,
+        qw/new  extract  error  last_results  separator
+            ignore_not_found _process _extract/
+    );
+    isa_ok($ext, 'Test0::Foo');
 
-$ext->extract({foo => 'div'}, '<div>ber</div><p>X<div>boorr</div>');
+    $ext->extract({foo => 'div'}, '<div>ber</div><p>X<div>boorr</div>');
 
-my ( $obj, $dom ) = (
-    splice(@Test0::Foo::ReturnData, 0, 1),
-    splice(@Test0::Foo::ReturnData, 1, 1),
-);
+    my ( $obj, $dom ) = splice @Test0::Foo::ReturnData, 0, 2;
 
-isa_ok( $obj, 'Test0::Foo' );
-isa_ok( $dom, 'Mojo::DOM' );
+    isa_ok( $obj, 'Test0::Foo' );
+    isa_ok( $dom, 'Mojo::DOM' );
 
-is $dom->find('p')->map('all_text')->compact->join("\n"),
-    'X',
-    'Mojo::DOM object is loaded with correct HTML';
+    is $dom->find('p')->map('all_text')->compact->join("\n"),
+        'X',
+        'Mojo::DOM object is loaded with correct HTML';
 
-cmp_deeply
-    \@Test0::Foo::ReturnData,
-    [
-        [qw/ber  boorr/],
-        'foo',
-        {foo => 'div'},
-    ],
-    'extra_processing method got the goods';
+    cmp_deeply
+        \@Test0::Foo::ReturnData,
+        [
+            'foo',
+            {foo => 'div'},
+        ],
+        '_extract method got the goods';
+
+}
+
+package Test1::Foo;
+use parent 'HTML::ExtractText';
+sub _process { return ref; }
+
+package main;
+
+{
+    my $ext = Test1::Foo->new;
+    can_ok($ext,
+        qw/new  extract  error  last_results  separator
+            ignore_not_found _process _extract/
+    );
+    isa_ok($ext, 'Test1::Foo');
+    $ext->extract({foo => 'div'}, '<div>ber</div>');
+    cmp_deeply
+        +{ %$ext },
+        { foo => 'Mojo::DOM' },
+        '_process method got the goods';
+
+}
 
 done_testing();

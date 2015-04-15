@@ -13,7 +13,7 @@ use HTML::ExtractText;
     my $ext = HTML::ExtractText->new;
     can_ok($ext,
         qw/new  extract  error  last_results  separator  ignore_not_found
-            extra_processing/
+            _process  _extract/
     );
     isa_ok($ext, 'HTML::ExtractText');
 }
