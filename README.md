@@ -69,6 +69,9 @@ using CSS selectors to declare what text needs extracting. The module
 can either return the results as a hashref or automatically call
 setter methods on a provided object.
 
+If you're looking for extra automatic post-processing and laxer
+definition of what constitutes "text", see [HTML::ExtractText::Extra](https://metacpan.org/pod/HTML::ExtractText::Extra).
+
 # OVERLOADED METHODS
 
     $extractor->extract(
@@ -215,6 +218,8 @@ the extracted text will be given to those methods as the first argument.
     <div style="background: url(http://zoffix.com/CPAN/Dist-Zilla-Plugin-Pod-Spiffy/icons/hr.png);height: 18px;"></div>
 </div>
 
+# ACCESSORS
+
 ## `->error()`
 
 <div>
@@ -296,7 +301,41 @@ Accessor to `ignore_not_found` option (see `->new()`).
 Takes one optional argument, which if provided, will become the
 new value of `ignore_not_found` option.
 
+# SUBCLASSING
+
+## `->extra_processing()`
+
+    sub extra_processing {
+        my ( $self, $results, $dom, $selector, $what ) = @_;
+
+        ...
+    }
+
+This module offers a method you can subclass. It will be called for
+each selector given in the first argument to `->extract()`.
+Its `@_` will contain:
+your class object, results arrayref with any found text—it will always
+be an arrayref, regardless of the value of `separator`—, a
+[Mojo::DOM](https://metacpan.org/pod/Mojo::DOM) object with html we're processing, the current selector
+we're working on (that's the keys of the first argument
+to `->extract()`), and the hashref passed as the first
+argument to `->extract()`.
+
+# NOTES AND CAVEATS
+
+## Encoding
+
+This module does not automatically encode extracted text, so the
+examples in this documentation should really include something akin to:
+
+    use Encode;
+
+    my $title = encode 'utf8', $ext->{page_title};
+    print "$title\n";
+
 # SEE ALSO
+
+[HTML::ExtractText::Extra](https://metacpan.org/pod/HTML::ExtractText::Extra) - a subclass that offers extra features
 
 [Mojo::DOM](https://metacpan.org/pod/Mojo::DOM), [Text::Balanced](https://metacpan.org/pod/Text::Balanced), [HTML::Extract](https://metacpan.org/pod/HTML::Extract)
 
