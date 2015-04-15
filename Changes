@@ -1,5 +1,10 @@
 Revision history for HTML-ExtractText
 
+1.002001  2015-04-15
+        - Added extra_processing() sub that can be
+            overriden by other classes that offer extra processing
+        - REMOVED automatic non-breaking space stripping
+
 1.001004  2015-03-26
         - Added automatic stripping of non-breaking spaces from output
         - Added notes on encoding

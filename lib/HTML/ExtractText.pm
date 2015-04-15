@@ -68,8 +68,7 @@ sub extract {
             my @results
             = $dom->find( $what->{ $selector } )->map('all_text')->each;
 
-            # get rid of pesky non-breaking spaces
-            tr/\x{00A0}/ / for @results;
+            $self->extra_processing( \@results, $dom, $selector, $what );
 
             die "NOT FOUND\n"
                 if not @results and not $self->ignore_not_found;
@@ -137,6 +136,10 @@ sub _set_error {
     return;
 }
 
+sub extra_processing {
+    # this is for overriding in subclasses
+}
+
 
 
 q|
@@ -148,7 +151,7 @@ __END__
 
 =encoding utf8
 
-=for stopwords Znet Zoffix errored
+=for stopwords Znet Zoffix errored  html
 
 =head1 NAME
 
@@ -210,6 +213,9 @@ The module allows to extract [multiple] text strings from HTML documents,
 using CSS selectors to declare what text needs extracting. The module
 can either return the results as a hashref or automatically call
 setter methods on a provided object.
+
+If you're looking for extra automatic post-processing and laxer
+definition of what constitutes "text", see L<HTML::ExtractText::Extra>.
 
 =head1 OVERLOADED METHODS
 
@@ -351,6 +357,8 @@ the extracted text will be given to those methods as the first argument.
 
 =for pod_spiffy hr
 
+=head1 ACCESSORS
+
 =head2 C<< ->error() >>
 
 =for pod_spiffy in scalar optional | out scalar
@@ -424,13 +432,27 @@ Accessor to C<ignore_not_found> option (see C<< ->new() >>).
 Takes one optional argument, which if provided, will become the
 new value of C<ignore_not_found> option.
 
+=head1 SUBCLASSING
+
+=head2 C<extra_processing>
+
+    sub extra_processing {
+        my ( $self, $results, $dom, $selector, $what ) = @_;
+
+        ...
+    }
+
+This module offers a method you can subclass. It will be called for
+each selector given in the first argument to C<< ->extract() >>.
+Its C<@_> will contain:
+your class object, results arrayref with any found text—it will always
+be an arrayref, regardless of the value of C<separator>—, a
+L<Mojo::DOM> object with html we're processing, the current selector
+we're working on (that's the keys of the first argument
+to C<< ->extract() >>), and the hashref passed as the first
+argument to C<< ->extract() >>.
+
 =head1 NOTES AND CAVEATS
-
-=head2 Non-breaking spaces
-
-This module automatically converts non-breaking spaces to regular
-spaces, because C<&nbsp;>s have cooties and no one wants to play
-with them.
 
 =head2 Encoding
 
@@ -442,10 +464,9 @@ examples in this documentation should really include something akin to:
     my $title = encode 'utf8', $ext->{page_title};
     print "$title\n";
 
-Or a similar approach to encoding, depending on what encoding you're
-actually using.
-
 =head1 SEE ALSO
+
+L<HTML::ExtractText::Extra> - a subclass that offers extra features
 
 L<Mojo::DOM>, L<Text::Balanced>, L<HTML::Extract>
 

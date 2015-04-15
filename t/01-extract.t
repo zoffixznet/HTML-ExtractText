@@ -12,7 +12,8 @@ use HTML::ExtractText;
 {
     my $ext = HTML::ExtractText->new;
     can_ok($ext,
-        qw/new  extract  error  last_results  separator  ignore_not_found/
+        qw/new  extract  error  last_results  separator  ignore_not_found
+            extra_processing/
     );
     isa_ok($ext, 'HTML::ExtractText');
 }
@@ -186,11 +187,11 @@ use HTML::ExtractText;
     );
 
     my $expected_result = {
-        p => "Par as1\nPar   as2",
-        a => 'Lin kas',
+        p => "Par as1\nPar \x{00A0} as2",
+        a => "Lin\x{00A0}kas",
     };
 
-    cmp_deeply $result, $expected_result, 'successfully got rid of &nbsp;';
+    cmp_deeply $result, $expected_result, 'Make sure &nbsp;s are preserved';
 }
 
 done_testing();
