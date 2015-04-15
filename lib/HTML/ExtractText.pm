@@ -66,7 +66,16 @@ sub extract {
 
         try {
             my @results
-            = $dom->find( $what->{ $selector } )->map('all_text')->each;
+            = $dom->find( $what->{ $selector } )->map(sub{
+                my $tag = $_->tag;
+                return $_->all_text unless $tag =~ /input|img/;
+
+                return $_->attr('alt')//''
+                    if $tag eq 'img' or
+                    ($tag eq 'input' and ($_->attr('type')//'') eq 'image');
+
+                return $_->attr('value')//'';
+            })->each;
 
             $self->extra_processing( \@results, $dom, $selector, $what );
 
@@ -409,6 +418,10 @@ whatever the selectors matched.
 If C<< separator >> (see C<< ->new() >>) is set to C<undef>, the values
 will be arrayrefs, with each item in those arrayrefs corresponding
 to one matched element in HTML.
+
+The module will attempt to DWIM (Do What I Mean) when selector matches
+form controls or images, and use C<value=""> or C<alt=""> attributes
+as text sources.
 
 =head2 C<< ->separator() >>
 
