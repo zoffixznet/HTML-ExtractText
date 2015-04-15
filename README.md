@@ -275,6 +275,10 @@ If `separator` (see `->new()`) is set to `undef`, the values
 will be arrayrefs, with each item in those arrayrefs corresponding
 to one matched element in HTML.
 
+The module will attempt to DWIM (Do What I Mean) when selector matches
+form controls or images, and use `value=""` or `alt=""` attributes
+as text sources.
+
 ## `->separator()`
 
 <div>
