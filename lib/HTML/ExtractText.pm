@@ -434,7 +434,7 @@ new value of C<ignore_not_found> option.
 
 =head1 SUBCLASSING
 
-=head2 C<extra_processing>
+=head2 C<< ->extra_processing() >>
 
     sub extra_processing {
         my ( $self, $results, $dom, $selector, $what ) = @_;
