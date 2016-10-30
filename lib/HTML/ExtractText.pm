@@ -565,6 +565,14 @@ to C<bug-html-extracttext at rt.cpan.org>
 
 =for pod_spiffy end author section
 
+=head1 CONTRIBUTORS
+
+=for pod_spiffy start contributors section
+ 
+=for pod_spiffy author DIONYS
+ 
+=for pod_spiffy end contributors section
+
 =head1 LICENSE
 
 You can use and distribute this module under the same terms as Perl itself.
