@@ -134,7 +134,7 @@ sub _set_error {
 
 sub _process {
     my $tag = $_->tag;
-    return $_->all_text unless $tag =~ /input|img/;
+    return _all_text($_) unless $tag =~ /input|img/;
 
     return $_->attr('alt')//''
         if $tag eq 'img' or
@@ -149,6 +149,62 @@ sub _extract {
         ->map( sub { $self->_process( @_ ) } )->each;
 }
 
+# The _all_text & _text functions copied from Mojo::DOM 6.66.
+sub _all_text {
+    my ( $dom ) = @_;
+    my $trim = 1;
+
+    # Detect "pre" tag
+    my $tree = $dom->tree;
+    map { $_->[1] eq 'pre' and $trim = 0 } Mojo::DOM::_ancestors( $dom ), $tree
+        if $trim && $tree->[0] ne 'root';
+
+    return _text( [Mojo::DOM::_nodes($tree)], $trim );
+}
+
+sub _text {
+    my ( $nodes, $trim ) = @_;
+
+    # Merge successive text nodes.
+    my $i = 0;
+    while ( my $next = $nodes->[$i + 1] ) {
+       ++$i and next unless $nodes->[$i][0] eq 'text' && $next->[0] eq 'text';
+       splice @$nodes, $i, 2, ['text', $nodes->[$i][1] . $next->[1]];
+    }
+
+    my $text = '';
+    for my $node ( @$nodes ) {
+        my $type = $node->[0];
+        my $chunk = '';
+
+        # Text.
+        if ( $type eq 'text' ) {
+            $chunk = $node->[1];
+            if ( $trim ) {
+                $chunk =~ s/^\s+//;
+                $chunk =~ s/\s+$//;
+                $chunk =~ s/\s+/ /g;
+            }
+        }
+        # CDATA or raw text.
+        elsif ( $type eq 'cdata' || $type eq 'raw' ) {
+            $chunk = $node->[1];
+        }
+        # Nested tag.
+        elsif ( $type eq 'tag' ) {
+           no warnings 'recursion';
+           $chunk = _text( [Mojo::DOM::_nodes($node)], 1, $node->[1] eq 'pre' ? 0 : $trim );
+        }
+
+        # Add leading whitespace if punctuation allows it.
+        $chunk = " $chunk" if $text =~ /\S\z/ && $chunk =~ /^[^.!?,;:\s]+/;
+
+        # Trim whitespace blocks.
+        $text .= $chunk if $chunk =~ /\S+/ || !$trim;
+    }
+
+    return $text;
+}
 
 
 q|
